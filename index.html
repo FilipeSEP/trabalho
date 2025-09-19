@@ -1,0 +1,134 @@
+CREATE DATABASE petshop;
+
+USE petshop;
+
+CREATE TABLE produtos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(255) NOT NULL,
+    preco DECIMAL(10, 2) NOT NULL,
+    imagem VARCHAR(500),
+    categoria VARCHAR(100),
+    estoque INT DEFAULT 0
+);
+
+CREATE TABLE clientes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(255) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    senha VARCHAR(255) NOT NULL,
+    endereco TEXT,
+    telefone VARCHAR(20)
+);
+
+CREATE TABLE pedidos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    cliente_id INT,
+    data_pedido TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    status ENUM('pendente', 'processando', 'enviado', 'entregue') DEFAULT 'pendente',
+    total DECIMAL(10, 2),
+    endereco_entrega TEXT,
+    FOREIGN KEY (cliente_id) REFERENCES clientes(id)
+);
+
+CREATE TABLE pedido_itens (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    pedido_id INT,
+    produto_id INT,
+    quantidade INT,
+    preco_unitario DECIMAL(10, 2),
+    FOREIGN KEY (pedido_id) REFERENCES pedidos(id),
+    FOREIGN KEY (produto_id) REFERENCES produtos(id)
+);
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+
+public class DatabaseConnection {
+    private static final String URL = "jdbc:mysql://localhost:3306/petshop";
+    private static final String USER = "seu_usuario";
+    private static final String PASSWORD = "sua_senha";
+    
+    public static Connection getConnection() throws SQLException {
+        return DriverManager.getConnection(URL, USER, PASSWORD);
+    }
+}
+public class Product {
+    private int id;
+    private String name;
+    private double price;
+    private String image;
+    private String category;
+    private int stock;
+    
+    // Construtores, getters e setters
+}
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.List;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import com.google.gson.Gson;
+
+@WebServlet("/api/products")
+public class ProductsServlet extends HttpServlet {
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) 
+            throws ServletException, IOException {
+        
+        List<Product> products = new ArrayList<>();
+        
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            String sql = "SELECT * FROM produtos WHERE estoque > 0";
+            PreparedStatement stmt = conn.prepareStatement(sql);
+            ResultSet rs = stmt.executeQuery();
+            
+            while (rs.next()) {
+                Product product = new Product();
+                product.setId(rs.getInt("id"));
+                product.setName(rs.getString("nome"));
+                product.setPrice(rs.getDouble("preco"));
+                product.setImage(rs.getString("imagem"));
+                product.setCategory(rs.getString("categoria"));
+                product.setStock(rs.getInt("estoque"));
+                
+                products.add(product);
+            }
+            
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+            response.getWriter().write(new Gson().toJson(products));
+            
+        } catch (Exception e) {
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Erro ao buscar produtos");
+        }
+    }
+}
+@WebServlet("/api/cart")
+public class CartServlet extends HttpServlet {
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) 
+            throws ServletException, IOException {
+        // Implementar adição de itens ao carrinho
+    }
+    
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) 
+            throws ServletException, IOException {
+        // Implementar recuperação do carrinho
+    }
+    
+    protected void doDelete(HttpServletRequest request, HttpServletResponse response) 
+            throws ServletException, IOException {
+        // Implementar remoção de itens do carrinho
+    }
+}
+@WebServlet("/api/checkout")
+public class CheckoutServlet extends HttpServlet {
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) 
+            throws ServletException, IOException {
+        // Implementar finalização de compra
+    }
+}
